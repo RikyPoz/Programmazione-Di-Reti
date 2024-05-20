@@ -37,7 +37,7 @@ class ChatServer:
             accept_thread.start()
             self.threads.append(accept_thread)
         except OSError as e:
-            print(CustomExceptions.OS_ERROR + str(e))
+            print(CustomExceptions.OS_ERROR + str(e) + "start")
 
         while True:
             try:
@@ -109,7 +109,7 @@ class ChatServer:
                     print(CustomExceptions.KEY_ERROR + str(e))
                     break
         except OSError as e:
-            print(CustomExceptions.OS_ERROR + str(e))
+            print(CustomExceptions.OS_ERROR + str(e)+ "handle client")
 
     # Funzione per disconnettere un client
     def delete_client(self, client_socket, name):
@@ -120,7 +120,8 @@ class ChatServer:
             self.clients.remove(client_socket)
             self.names.remove(name)
             # Chiude la socket del client
-            client_socket.close()
+            #client_socket.close()
+
             # Invia un messaggio a tutti i client rimanenti per notificare che un client ha lasciato la chat
             self.broadcast(bytes("%s ha abbandonato la Chat." % name, "utf8"))
             print("%s ha abbandonato la Chat." % name)
@@ -138,7 +139,7 @@ class ChatServer:
                 # Invio del messaggio a tutti i client connessi
                 client_socket.send(bytes(prefix, "utf8") + msg)
             except OSError as e:
-                print(CustomExceptions.OS_ERROR + str(e))
+                print(CustomExceptions.OS_ERROR + str(e)+"broadcast")
 
     # Funzione per chiudere il server
     def shutdown_server(self):
@@ -147,7 +148,7 @@ class ChatServer:
             try:
                 client.send(bytes("{quit}", "utf8"))
             except OSError as e:
-                print(CustomExceptions.OS_ERROR + str(e))
+                print(CustomExceptions.OS_ERROR + str(e) + "shutdow")
         
         print("Tutti i client sono stati disconnessi")
 
@@ -163,7 +164,7 @@ class ChatServer:
         try:
             self.server_socket.close()
         except OSError as e:
-            print(CustomExceptions.OS_ERROR + str(e))
+            print(CustomExceptions.OS_ERROR + str(e)+"close server socket")
 
         print("Server disconnesso")
 
