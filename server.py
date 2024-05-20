@@ -1,33 +1,33 @@
 from socket import AF_INET, socket, SOCK_STREAM
 from threading import Thread
- # Import delle eccezioni personalizzate
+# Import delle eccezioni personalizzate
 from CustomExceptions import CustomExceptions
 
 import sys
 import time
 
 
-
 class ChatServer:
-    #funzione di inizializzazione del server 
+    # Funzione di inizializzazione del server
     def __init__(self, host, port):
+        # Inizializzazione dei valori necessari per la creazione del socket
         self.host = host
         self.port = port
         self.buffer_size = 1024
         self.address = (self.host, self.port)
-        # Inizializzazione dei dizionari per i client e i loro indirizzi
+        # Liste per memorizzare i client e i loro nomi
         self.clients = []
         self.names = []
         self.threads = []
-        # Creazione del socket del Server
+        # Creazione del socket del server
         self.server_socket = socket(AF_INET, SOCK_STREAM)
-        
-        self.handle_thread = True
-        self.receive_thread= True
+        # Flag utilizzati per interrompere i thread in esecuzione
+        self.handleThread_flag = True
+        self.receiveThread_flag = True
 
     def start(self):
         try:
-            # Legame del socket del Server con il suo address
+            # Binding del socket del server con il suo indirizzo
             self.server_socket.bind(self.address)
             # Il server inizia ad ascoltare le connessioni in entrata (fino a 5 in coda)
             self.server_socket.listen(5)
@@ -36,31 +36,27 @@ class ChatServer:
             accept_thread = Thread(target=self.receive_connections)
             accept_thread.start()
             self.threads.append(accept_thread)
-            
         except OSError as e:
             print(CustomExceptions.OS_ERROR + str(e))
 
-        while True :
+        while True:
             try:
                 time.sleep(5)
                 print("server in azione")
             except KeyboardInterrupt:
-                print("prova")
                 self.shutdown_server()
 
-
-    # funzione che gestisce le richieste di connessione
+    # Funzione che gestisce le richieste di connessione
     def receive_connections(self):
-        while self.receive_thread:
+        while self.receiveThread_flag:
             try:
-                # Accettazione di  una connessione da un Client
+                # Accettazione di una connessione da un client
                 client_socket, client_address = self.server_socket.accept()
                 print("Si è collegato al server", client_address)
-                #al client che si connette per la prima volta fornisce alcune indicazioni di utilizzo
+                # Invia al client un messaggio di benvenuto con istruzioni
                 client_socket.send(bytes("Salve! Digita il tuo Nome seguito dal tasto Invio!", "utf8"))
                 
-                # Memorizzazione dell'indirizzo del client
-                
+                # Memorizzazione del client
                 self.clients.append(client_socket)
                 
                 # Creazione e avvio di un thread per gestire il client
@@ -68,9 +64,7 @@ class ChatServer:
                 clientThread.start()
                 self.threads.append(clientThread)
             except ConnectionResetError as e:
-                # Stampa di errore
-                print("Tentativo di ricezione su socket precedentemente chiusa, terminazione dell'handle thread in corso ...",e)
-                # Interruzione del ciclo
+                print("Tentativo di ricezione su socket precedentemente chiusa", e)
                 break
             except OSError as e:
                 print("Thread Server terminato da linea di comando")
@@ -78,31 +72,29 @@ class ChatServer:
             except Exception as e:
                 print("[ERRORE] Impossibile accettare la connessione:", e)
                 break
-            
-            
 
+    # Funzione per gestire le comunicazioni con un client specifico
     def handle_client(self, client_socket):
-
         try:
+            # Ricezione del nome del client
             name = client_socket.recv(1024).decode("utf-8")
             self.names.append(name)
+            # Invio del messaggio di benvenuto al nuovo client
             welcome_message = 'Benvenuto %s! Se vuoi lasciare la Chat, scrivi {quit} per uscire.' % name
             client_socket.send(bytes(welcome_message, "utf8"))
             msg = "%s si è unito alla chat!" % name
             self.broadcast(bytes(msg, "utf8"))
-            
 
-            while self.handle_thread:
+            while self.handleThread_flag:
                 try:
                     # Ricezione di un messaggio dal client
                     msg = client_socket.recv(self.buffer_size)
-                    #se il messaggio ricevuto è diverso da quit
+                    # Se il messaggio ricevuto è diverso da "{quit}"
                     if msg != bytes("{quit}", "utf8"):
-                        self.broadcast(msg, name+": ")
+                        self.broadcast(msg, name + ": ")
                     else:
-                        #se il messaggio è uguale a quit
-                        self.delete_client(client_socket,name)
-                        # Interruzione del ciclo
+                        # Se il messaggio è uguale a "{quit}", disconnetti il client
+                        self.delete_client(client_socket, name)
                         break
                 except ConnectionResetError as e:
                     print(CustomExceptions.CONNECTION_RESET_ERROR + str(e))
@@ -116,65 +108,58 @@ class ChatServer:
                 except KeyError as e:
                     print(CustomExceptions.KEY_ERROR + str(e))
                     break
-
         except OSError as e:
             print(CustomExceptions.OS_ERROR + str(e))
 
-    
-    # FUNZIONE DI DISCONNESSIONE DEL CLIENT
-    def delete_client(self,client_socket,name):
+    # Funzione per disconnettere un client
+    def delete_client(self, client_socket, name):
         try:
-            
-            # Invio del messaggio di quit al Client (per dirgli di abbandonare la chat)
+            # Invio del messaggio di quit al client
             client_socket.send(bytes("{quit}", "utf8"))
-            #eliminiamo il client dalla lista
+            # Rimuove il client dalla lista dei client connessi
             self.clients.remove(client_socket)
             self.names.remove(name)
-            #chiudiamo la socket relativa a quel client
-            #client_socket.close()
-            #invio a tutti i client restanti il messaggio che il client ha abbandonato la chat
+            # Chiude la socket del client
+            client_socket.close()
+            # Invia un messaggio a tutti i client rimanenti per notificare che un client ha lasciato la chat
             self.broadcast(bytes("%s ha abbandonato la Chat." % name, "utf8"))
             print("%s ha abbandonato la Chat." % name)
-            print("persone rimaste :")
+            print("Persone rimaste:")
             for name in self.names:
-                print(" ",name)
-        
-        # Gestione del tentativo di invio di un messaggio su un socket chiuso
+                print(" ", name)
         except ConnectionResetError:
-            # Stampa di avviso
-            print("Azione non andata a buon fine perchè la socket è gia stata chiusa")
+            # Gestione del tentativo di invio di un messaggio su una socket chiusa
+            print("Azione non andata a buon fine perché la socket è già stata chiusa")
 
-
+    # Funzione per inviare un messaggio a tutti i client connessi
     def broadcast(self, msg, prefix=""):
         for client_socket in self.clients:
             try:
                 # Invio del messaggio a tutti i client connessi
-                client_socket.send(bytes(prefix, "utf8")+msg)
+                client_socket.send(bytes(prefix, "utf8") + msg)
             except OSError as e:
                 print(CustomExceptions.OS_ERROR + str(e))
-    
-    
+
+    # Funzione per chiudere il server
     def shutdown_server(self):
-        
-        
-        # Notificare tutti i client connessi e chiudere le loro connessioni
+        # Notifica tutti i client connessi e chiude le loro connessioni
         for client in list(self.clients):
             try:
                 client.send(bytes("{quit}", "utf8"))
-                
             except OSError as e:
                 print(CustomExceptions.OS_ERROR + str(e))
         
         print("Tutti i client sono stati disconnessi")
 
-        # Svuotare le liste dei client e dei nomi
+        # Svuota le liste dei client e dei nomi
         self.clients.clear()
         self.names.clear()
 
-        self.handle_thread=False
-        self.receive_thread=False
+        # Imposta i flag per interrompere i thread
+        self.handleThread_flag = False
+        self.receiveThread_flag = False
 
-         # Chiudere il server socket per interrompere il loop di accettazione
+        # Chiude il server socket per interrompere il loop di accettazione
         try:
             self.server_socket.close()
         except OSError as e:
@@ -182,27 +167,19 @@ class ChatServer:
 
         print("Server disconnesso")
 
-        ## Attendere la terminazione dei thread
+        # Attende la terminazione dei thread
         for thread in self.threads:
             try:
-                
                 thread.join()
-                print("thread rimosso",thread)
+                print("Thread rimosso", thread)
             except RuntimeError as e:
                 print("[ERRORE] Impossibile terminare il thread:", e)
 
-       
-
         sys.exit(0)
 
-          
+
 if __name__ == "__main__":
-    #Creazione del server tramite il proprio costruttore (funzione _init_)
+    # Creazione del server tramite il costruttore (funzione __init__)
     server = ChatServer('localhost', 8080)
-    #Chiama la funzione per mettere il server in ascolto
+    # Chiama la funzione per mettere il server in ascolto
     server.start()
-    
-
-
-
-
