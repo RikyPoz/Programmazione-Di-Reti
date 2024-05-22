@@ -42,9 +42,11 @@ class ChatServer:
 
         while True:
             try:
+                #Ogni 5 secondi viene notificato che il server è ancora attivo
                 time.sleep(5)
-                print("server in azione")
+                print("server attivo")
             except KeyboardInterrupt:
+                #Eccezione che viene gestita quando il server viene terminato tramite CTRL+C
                 self.shutdown_server()
 
     # Funzione che gestisce le richieste di connessione
