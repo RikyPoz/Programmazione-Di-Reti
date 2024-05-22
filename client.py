@@ -99,6 +99,7 @@ class ChatClient:
                     # Inserimento del messaggio nella lista dei messaggi
                     self.message_list.insert(tk.END, message)
                     if message == "{quit}":
+                        print("Abbandono della chat....")
                         # Chiusura della connessione se il messaggio è "{quit}"
                         self.socket.close()
                         self.gui.quit()
@@ -145,10 +146,11 @@ class ChatClient:
         self.send_message()
 
 if __name__ == "__main__":
-    # Specifica dell'host e della porta del server
-    host = 'localhost'
-    port = 8080
+    # Richiesta della Server Ip
+    serverHost = input("Inserisci server host:")
+    # Richiesta della Server port
+    serverPort = int(input("Inserisci server port:"))
 
     # Creazione di un'istanza di ChatClient e avvio del loop principale di tkinter
-    client = ChatClient(host, port)
+    client = ChatClient(serverHost, serverPort)
     tk.mainloop()

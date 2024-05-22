@@ -63,8 +63,8 @@ class ChatServer:
                 clientThread = Thread(target=self.handle_client, args=(client_socket,))
                 clientThread.start()
                 self.threads.append(clientThread)
-            except ConnectionResetError as e:
-                print("Tentativo di ricezione su socket precedentemente chiusa", e)
+            except BrokenPipeError as e:
+                print(CustomExceptions.BROKEN_PIPE_ERROR + str(e))
                 break
             except OSError as e:
                 print("Thread Server terminato da linea di comando")
@@ -96,20 +96,23 @@ class ChatServer:
                         # Se il messaggio è uguale a "{quit}", disconnetti il client
                         self.delete_client(client_socket, name)
                         break
-                except ConnectionResetError as e:
-                    print(CustomExceptions.CONNECTION_RESET_ERROR + str(e))
-                    break
-                except ConnectionAbortedError as e:
-                    print(CustomExceptions.CONNECTION_ABORTED_ERROR + str(e))
-                    break
                 except UnicodeDecodeError as e:
                     print(CustomExceptions.UNICODE_DECODE_ERROR + str(e))
-                    break
-                except KeyError as e:
-                    print(CustomExceptions.KEY_ERROR + str(e))
-                    break
+        
+        except ConnectionResetError as e:
+                    print(CustomExceptions.CONNECTION_RESET_ERROR + str(e))
+                    self.clients.remove(client_socket)
+                    self.names.remove(name)
+        except ConnectionAbortedError as e:
+                    print(CustomExceptions.CONNECTION_ABORTED_ERROR + str(e))
+                    self.clients.remove(client_socket)
+                    self.names.remove(name)
         except OSError as e:
-            print(CustomExceptions.OS_ERROR + str(e)+ "handle client")
+                    print(CustomExceptions.OS_ERROR + str(e))
+                    self.clients.remove(client_socket)
+                    self.names.remove(name)
+                   
+
 
     # Funzione per disconnettere un client
     def delete_client(self, client_socket, name):
@@ -125,12 +128,14 @@ class ChatServer:
             # Invia un messaggio a tutti i client rimanenti per notificare che un client ha lasciato la chat
             self.broadcast(bytes("%s ha abbandonato la Chat." % name, "utf8"))
             print("%s ha abbandonato la Chat." % name)
+        
+                 
             print("Persone rimaste:")
             for name in self.names:
                 print(" ", name)
-        except ConnectionResetError:
-            # Gestione del tentativo di invio di un messaggio su una socket chiusa
-            print("Azione non andata a buon fine perché la socket è già stata chiusa")
+                
+        except BrokenPipeError as e:
+                print(CustomExceptions.BROKEN_PIPE_ERROR + str(e))
 
     # Funzione per inviare un messaggio a tutti i client connessi
     def broadcast(self, msg, prefix=""):
@@ -138,8 +143,10 @@ class ChatServer:
             try:
                 # Invio del messaggio a tutti i client connessi
                 client_socket.send(bytes(prefix, "utf8") + msg)
-            except OSError as e:
-                print(CustomExceptions.OS_ERROR + str(e)+"broadcast")
+            except BrokenPipeError as e:
+                print(CustomExceptions.BROKEN_PIPE_ERROR + str(e)+"broadcast")
+            
+            
 
     # Funzione per chiudere il server
     def shutdown_server(self):
@@ -147,9 +154,9 @@ class ChatServer:
         for client in list(self.clients):
             try:
                 client.send(bytes("{quit}", "utf8"))
-            except OSError as e:
-                print(CustomExceptions.OS_ERROR + str(e) + "shutdow")
-        
+            except BrokenPipeError as e:
+                print(CustomExceptions.BROKEN_PIPE_ERROR + str(e)+"broadcast")
+            
         print("Tutti i client sono stati disconnessi")
 
         # Svuota le liste dei client e dei nomi
@@ -180,7 +187,11 @@ class ChatServer:
 
 
 if __name__ == "__main__":
+    # Richiesta della Server Ip
+    serverHost = input("Inserisci server host:")
+    # Richiesta della Server port
+    serverPort = int(input("Inserisci server port:"))
     # Creazione del server tramite il costruttore (funzione __init__)
-    server = ChatServer('localhost', 8080)
+    server = ChatServer(serverHost, serverPort)
     # Chiama la funzione per mettere il server in ascolto
     server.start()
