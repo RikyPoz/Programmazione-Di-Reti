@@ -75,12 +75,12 @@ class ChatClient:
             exit(0)
         except OSError as e:
             # Gestione di errori generici del sistema operativo
-            print(CustomExceptions.OS_ERROR + e)
-            exit(1)
+            print(CustomExceptions.OS_ERROR + str(e))
+            exit(0)
         except Exception as e:
             # Gestione di errori generali di connessione
             print(CustomExceptions.GENERAL_CONNECTION_ERROR + str(e))
-            exit(1)
+            exit(0)
 
     def start_receiving_thread(self):
         # Creazione e avvio di un thread per ricevere i messaggi dal server

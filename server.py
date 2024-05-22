@@ -38,15 +38,12 @@ class ChatServer:
             self.threads.append(accept_thread)
         except OSError as e:
             print(CustomExceptions.OS_ERROR + str(e) + "start")
-            exit(0)
 
         while True:
             try:
-                #Ogni 5 secondi viene notificato che il server è ancora attivo
                 time.sleep(5)
-                print("server attivo")
+                print("server in azione")
             except KeyboardInterrupt:
-                #Eccezione che viene gestita quando il server viene terminato tramite CTRL+C
                 self.shutdown_server()
 
     # Funzione che gestisce le richieste di connessione
@@ -182,11 +179,9 @@ class ChatServer:
         for thread in self.threads:
             try:
                 thread.join()
+                print("Thread rimosso", thread)
             except RuntimeError as e:
                 print("[ERRORE] Impossibile terminare il thread:", e)
-
-        self.threads.clear()
-        print("Thread rimossi")
 
         sys.exit(0)
 
