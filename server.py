@@ -41,9 +41,11 @@ class ChatServer:
 
         while True:
             try:
+                #Ogni 5 secondi viene notificato che il server è ancora attivo
                 time.sleep(5)
                 print("server in azione")
             except KeyboardInterrupt:
+                #Eccezione che viene gestita quando il server viene terminato tramite CTRL+C
                 self.shutdown_server()
 
     # Funzione che gestisce le richieste di connessione
@@ -129,7 +131,7 @@ class ChatServer:
             self.broadcast(bytes("%s ha abbandonato la Chat." % name, "utf8"))
             print("%s ha abbandonato la Chat." % name)
         
-                 
+            #Stampa una lista di tutti i client connessi  
             print("Persone rimaste:")
             for name in self.names:
                 print(" ", name)
@@ -183,7 +185,7 @@ class ChatServer:
             except RuntimeError as e:
                 print("[ERRORE] Impossibile terminare il thread:", e)
 
-        sys.exit(0)
+        sys.exit()
 
 
 if __name__ == "__main__":
