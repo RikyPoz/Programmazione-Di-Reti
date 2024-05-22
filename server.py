@@ -38,6 +38,7 @@ class ChatServer:
             self.threads.append(accept_thread)
         except OSError as e:
             print(CustomExceptions.OS_ERROR + str(e) + "start")
+            exit(0)
 
         while True:
             try:
@@ -179,9 +180,11 @@ class ChatServer:
         for thread in self.threads:
             try:
                 thread.join()
-                print("Thread rimosso", thread)
             except RuntimeError as e:
                 print("[ERRORE] Impossibile terminare il thread:", e)
+
+        self.threads.clear()
+        print("Thread rimossi")
 
         sys.exit(0)
 
