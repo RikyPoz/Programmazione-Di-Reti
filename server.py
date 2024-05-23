@@ -38,6 +38,8 @@ class ChatServer:
             self.threads.append(accept_thread)
         except OSError as e:
             print(CustomExceptions.OS_ERROR + str(e) + "start")
+        except Exception as e:
+            print(e)
 
         while True:
             try:
@@ -69,7 +71,7 @@ class ChatServer:
                 print(CustomExceptions.BROKEN_PIPE_ERROR + str(e))
                 break
             except OSError as e:
-                print("Thread Server terminato da linea di comando")
+                print(CustomExceptions.OS_ERROR + str(e))
                 break
             except Exception as e:
                 print("[ERRORE] Impossibile accettare la connessione:", e)
@@ -181,9 +183,11 @@ class ChatServer:
         for thread in self.threads:
             try:
                 thread.join()
-                print("Thread rimosso", thread)
             except RuntimeError as e:
                 print("[ERRORE] Impossibile terminare il thread:", e)
+
+        #Rimozione dei thread dalla lista
+        self.threads.clear()
 
         sys.exit()
 
