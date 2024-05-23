@@ -37,9 +37,12 @@ class ChatServer:
             accept_thread.start()
             self.threads.append(accept_thread)
         except OSError as e:
-            print(CustomExceptions.OS_ERROR + str(e) + "start")
+            #In caso di errori il processo viene terminato
+            print(CustomExceptions.OS_ERROR + str(e))
+            sys.exit()
         except Exception as e:
             print(e)
+            sys.exit()
 
         while True:
             try:
@@ -59,10 +62,8 @@ class ChatServer:
                 print("Si è collegato al server", client_address)
                 # Invia al client un messaggio di benvenuto con istruzioni
                 client_socket.send(bytes("Salve! Digita il tuo Nome seguito dal tasto Invio!", "utf8"))
-                
                 # Memorizzazione del client
                 self.clients.append(client_socket)
-                
                 # Creazione e avvio di un thread per gestire il client
                 clientThread = Thread(target=self.handle_client, args=(client_socket,))
                 clientThread.start()
