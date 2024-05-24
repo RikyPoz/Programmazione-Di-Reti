@@ -95,6 +95,7 @@ class ChatClient:
                 # Ricezione del messaggio dal server
                 message = self.socket.recv(BUFFER_SIZE).decode("utf8")
                 if message:
+                    print(message)
                     # Inserimento del messaggio nella lista dei messaggi
                     self.message_list.insert(tk.END, message)
                     if message == "{quit}":

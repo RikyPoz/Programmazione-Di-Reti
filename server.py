@@ -94,6 +94,8 @@ class ChatServer:
                 try:
                     # Ricezione di un messaggio dal client
                     msg = client_socket.recv(self.buffer_size)
+                    if not msg:
+                        raise ConnectionError
                     # Se il messaggio ricevuto è diverso da "{quit}"
                     if msg != bytes("{quit}", "utf8"):
                         self.broadcast(msg, name + ": ")
