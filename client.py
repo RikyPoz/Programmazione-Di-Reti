@@ -94,7 +94,6 @@ class ChatClient:
             try:
                 # Ricezione del messaggio dal server
                 message = self.socket.recv(BUFFER_SIZE).decode("utf8")
-                print(message)
                 if message:
                     # Inserimento del messaggio nella lista dei messaggi
                     self.message_list.insert(tk.END, message)
