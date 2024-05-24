@@ -94,6 +94,7 @@ class ChatServer:
                 try:
                     # Ricezione di un messaggio dal client
                     msg = client_socket.recv(self.buffer_size)
+                    #Se il messaggio ricevuto è vuoto
                     if not msg:
                         raise ConnectionError
                     # Se il messaggio ricevuto è diverso da "{quit}"
